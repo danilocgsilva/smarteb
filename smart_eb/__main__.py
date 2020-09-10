@@ -1,3 +1,5 @@
+from smart_eb.EbClient import EbClient
+
 def main():
-    print("Hello World! Starts here the smart_eb program to change the world!")
+    EbClient().init()
 
