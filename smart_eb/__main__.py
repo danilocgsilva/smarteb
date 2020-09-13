@@ -9,11 +9,16 @@ def main():
 
     user_command = UserCall().getUserCall()
 
+    eb_client = EbClient()
+
     if re.search("^(list|)$", user_command):
         print("Lets list")
+        print(eb_client.list())
     elif user_command == "new":
         print("Lets create a new.")
-        EbClient().new(os.getcwd())
+        eb_client.new(os.getcwd(), get_name())
 
     # EbClient().new('/')
 
+def get_name() -> str:
+    return EbClient().get_name()
