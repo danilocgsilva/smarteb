@@ -20,3 +20,9 @@ class test_UserCall(unittest.TestCase):
         expected_command = 'new'
         with patch.object(sys, 'argv', testargs):
             self.assertEqual(expected_command, self.userCall.getUserCall())
+
+    def test_getUserCallEmpty(self):
+        testargs = ["smeg"]
+        expected_command = ''
+        with patch.object(sys, 'argv', testargs):
+            self.assertEqual(expected_command, self.userCall.getUserCall())
