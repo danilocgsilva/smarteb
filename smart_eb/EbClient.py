@@ -1,4 +1,5 @@
 import os
+import boto3
 
 class EbClient:
 
@@ -7,4 +8,8 @@ class EbClient:
         if not os.path.exists(path):
             raise Exception("The path provided to the init method of EbClient does not exists.")
 
-        print("Lets init!")
+        eb_client = boto3.client('elasticbeanstalk')
+
+        response = eb_client.create_application(ApplicationName="testing3")
+
+        print(response)
