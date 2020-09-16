@@ -40,6 +40,8 @@ class EbClient:
             )
             print("The application " + app_name + " has been deleted.")
         
+    def create_eb_config(self, app_name: str):
+        
 
     def get_name(self) -> str:
         return 'app-' + str(math.ceil(random() * 10000))

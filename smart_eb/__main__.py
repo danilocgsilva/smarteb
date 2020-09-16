@@ -17,7 +17,9 @@ def main():
     if re.search("^(list|)$", user_command.getUserCommand()):
         user_response.setList(eb_client.list()).printFromList()
     elif user_command.getUserCommand() == "new":
-        ebdata = eb_client.new(os.getcwd(), get_name())
+        app_name = get_name()
+        ebdata = eb_client.new(os.getcwd(), app_name)
+
         user_response.setEbData(ebdata).printFromNew()
     elif re.search("^delete", user_command.getUserCommand()):
         if not re.search("^delete:", user_command.getUserCommand()):
@@ -36,3 +38,6 @@ def main():
 
 def get_name() -> str:
     return EbClient().get_name()
+
+def create_eb_config(app_name: str):
+    EbClient().create_eb_config(app_name)
