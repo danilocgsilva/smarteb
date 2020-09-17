@@ -42,6 +42,24 @@ class test_EbLocalConfigurator(unittest.TestCase):
 
         self.assertEqual(expected_content, self.ebLocalConfigurator.getConfigurationContent())
 
+    def test_guess_environment_name(self):
+
+        app_name = "app_name_123"
+
+        expected_content = self.getBaseContentWithPlaceholders().format(
+            "app_name_123-env", "null", "app_name_123",
+            "null", "null", "null",
+            "null", "null", "null",
+            "null", "null", "null",
+            "null", "null"
+        )
+
+        self.ebLocalConfigurator\
+            .setApplicationName(app_name)\
+            .guess_environment_name()
+
+        self.assertEqual(expected_content, self.ebLocalConfigurator.getConfigurationContent())
+
     def getBaseContentWithPlaceholders(self):
         return """branch-defaults:
   default:

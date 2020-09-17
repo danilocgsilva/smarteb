@@ -1,4 +1,5 @@
 from smart_eb.EBFormater import EBFormater
+from smart_eb.EbLocalConfigurator import EbLocalConfigurator
 from random import random
 import boto3
 import math
@@ -10,10 +11,18 @@ class EbClient:
         self.eb_client = boto3.client('elasticbeanstalk')
 
     def new(self, path: str, name: str) -> EBFormater:
-        if not os.path.exists(path):
-            raise OSError("The path provided to the init method of EbClient does not exists.")
+        
+        ebLocalConfigurator = self.create_eb_config(name, path)
+        fileres = open(os.path.join(path, "index.php"), "a")
+        fileres.write("<?php\nprint(\"Hello World from " + ebLocalConfigurator.getApplicationName() + "!!!\");\n\n")
+        fileres.close()
 
         response = self.eb_client.create_application(ApplicationName=name)
+        self.eb_client.create_environment(
+            ApplicationName=name,
+            EnvironmentName=ebLocalConfigurator.getEnvironment(),
+            SolutionStackName="64bit Amazon Linux 2 v3.1.1 running PHP 7.4"
+        )
         
         return EBFormater(response["Application"])
         
@@ -40,7 +49,29 @@ class EbClient:
             )
             print("The application " + app_name + " has been deleted.")
         
-    def create_eb_config(self, app_name: str):
+    def create_eb_config(
+        self, 
+        app_name: str,
+        path: str
+    ):
+        if not os.path.exists(path):
+            raise OSError("The path provided to the init method of EbClient does not exists.")
+
+        ebLocalConfigurator = EbLocalConfigurator()
+        ebLocalConfigurator\
+            .setApplicationName(app_name)\
+            .setDefaultPlatform("PHP 7.4 running on 64bit Amazon Linux 2")\
+            .guess_environment_name()
+
+        folder_to_be_created = os.path.join(path, '.elasticbeanstalk')
+        os.makedirs(folder_to_be_created)
+        file_to_be_created = os.path.join(folder_to_be_created, 'config.yml')
+
+        f = open(file_to_be_created, "a")
+        f.write(ebLocalConfigurator.getConfigurationContent())
+        f.close()
+
+        return ebLocalConfigurator
         
 
     def get_name(self) -> str:

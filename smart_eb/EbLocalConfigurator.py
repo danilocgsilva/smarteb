@@ -101,3 +101,16 @@ global:
     def setWorkspacetype(self, workspace_type: str):
         self.workspace_type = workspace_type
         return self
+
+    def getEnvironment(self) -> str:
+        return self.environment
+
+    def getDefaultPlatform(self) -> str:
+        return self.default_platform
+
+    def getApplicationName(self) -> str:
+        return self.application_name
+
+    def guess_environment_name(self):
+        self.environment = self.application_name + "-env"
+        return self
