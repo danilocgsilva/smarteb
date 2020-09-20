@@ -13,11 +13,28 @@ class EbClient:
     def new(self, path: str, name: str) -> EBFormater:
         
         ebLocalConfigurator = self.create_eb_config(name, path)
+        application_name = ebLocalConfigurator.getApplicationName()
+
         fileres = open(os.path.join(path, "index.php"), "a")
-        fileres.write("<?php\nprint(\"Hello World from " + ebLocalConfigurator.getApplicationName() + "!!!\");\n\n")
+        fileres.write("<?php\nprint(\"Hello World from " + application_name + "!!!\");\n\n")
         fileres.close()
 
         response = self.eb_client.create_application(ApplicationName=name)
+
+        self.eb_client.create_configuration_template(
+            ApplicationName=application_name,
+            TemplateName='template-name-for-' + application_name,
+            SolutionStackName="64bit Amazon Linux 2 v3.1.1 running PHP 7.4",
+            OptionSettings=[
+                {
+                    # 'ResourceName': 'string',
+                    'Namespace': 'aws:autoscaling:launchconfiguration',
+                    'OptionName': 'aws-elasticbeanstalk-ec2-role',
+                    # 'Value': 'string'
+                },
+            ],
+        )
+
         self.eb_client.create_environment(
             ApplicationName=name,
             EnvironmentName=ebLocalConfigurator.getEnvironment(),
