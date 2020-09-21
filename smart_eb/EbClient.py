@@ -21,24 +21,17 @@ class EbClient:
 
         response = self.eb_client.create_application(ApplicationName=name)
 
-        self.eb_client.create_configuration_template(
-            ApplicationName=application_name,
-            TemplateName='template-name-for-' + application_name,
-            SolutionStackName="64bit Amazon Linux 2 v3.1.1 running PHP 7.4",
-            OptionSettings=[
-                {
-                    # 'ResourceName': 'string',
-                    'Namespace': 'aws:autoscaling:launchconfiguration',
-                    'OptionName': 'aws-elasticbeanstalk-ec2-role',
-                    # 'Value': 'string'
-                },
-            ],
-        )
-
         self.eb_client.create_environment(
             ApplicationName=name,
             EnvironmentName=ebLocalConfigurator.getEnvironment(),
-            SolutionStackName="64bit Amazon Linux 2 v3.1.1 running PHP 7.4"
+            SolutionStackName="64bit Amazon Linux 2 v3.1.1 running PHP 7.4",
+            OptionSettings=[
+                {
+                    'Namespace': 'aws:autoscaling:launchconfiguration',
+                    'OptionName': 'IamInstanceProfile',
+                    'Value': 'aws-elasticbeanstalk-ec2-role'
+                },
+            ],
         )
         
         return EBFormater(response["Application"])

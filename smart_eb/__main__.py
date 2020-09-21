@@ -19,7 +19,6 @@ def main():
     elif user_command.getUserCommand() == "new":
         app_name = get_name()
         ebdata = eb_client.new(os.getcwd(), app_name)
-
         user_response.setEbData(ebdata).printFromNew()
     elif re.search("^delete", user_command.getUserCommand()):
         if not re.search("^delete:", user_command.getUserCommand()):
