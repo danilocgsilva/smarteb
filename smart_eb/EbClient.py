@@ -4,6 +4,7 @@ from random import random
 import boto3
 import math
 import os
+import subprocess
 
 class EbClient:
 
@@ -19,7 +20,30 @@ class EbClient:
         fileres.write("<?php\nprint(\"Hello World from " + application_name + "!!!\");\n\n")
         fileres.close()
 
+        current_path = os.getcwd()
+        os.chdir(path)
+        subprocess.call(['git', 'init'])
+        subprocess.call(['git', 'add', '.'])
+        subprocess.call(['git', 'commit', '-m', "First commit"])
+        os.chdir(path)
+
         response = self.eb_client.create_application(ApplicationName=name)
+
+        self.eb_client.create_application_version(
+            ApplicationName=name,
+            VersionLabel='version1',
+            # SourceBuildInformation={
+            #     'SourceType': 'Git',
+            #     'SourceRepository': 'CodeCommit',
+            #     'SourceLocation': 'my-git-repo/1234'
+            # },
+            SourceBuildInformation={
+                'SourceType': 'Zip',
+                'SourceRepository': 'S3',
+                'SourceLocation': 'my-s3-bucket/Folders/my-source-file'
+            },
+            Process=True,
+        )
 
         self.eb_client.create_environment(
             ApplicationName=name,
@@ -70,6 +94,7 @@ class EbClient:
         ebLocalConfigurator = EbLocalConfigurator()
         ebLocalConfigurator\
             .setApplicationName(app_name)\
+            .setDefaultRegion(boto3.session.Session().region_name)\
             .setDefaultPlatform("PHP 7.4 running on 64bit Amazon Linux 2")\
             .guess_environment_name()
 

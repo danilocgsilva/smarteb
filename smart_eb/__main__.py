@@ -1,9 +1,10 @@
 from smart_eb.EbClient import EbClient
 from smart_eb.UserCall import UserCall
+from smart_eb.UserResponse import UserResponse
+from awsguesslocalprofile.AWSGuessLocalProfile import AWSGuessLocalProfile
 import os
 import re
 import sys
-from smart_eb.UserResponse import UserResponse
 
 
 def main():
@@ -32,8 +33,6 @@ def main():
 
     else:
         print("I still does not have implemented such command: " + user_command)
-
-    # EbClient().new('/')
 
 def get_name() -> str:
     return EbClient().get_name()
