@@ -1,10 +1,15 @@
+from danilocgsilvame_python_helpers.DcgsPythonHelpers import DcgsPythonHelpers
 from smart_eb.EBFormater import EBFormater
 from smart_eb.EbLocalConfigurator import EbLocalConfigurator
 from random import random
+from zipfile import ZipFile
+# from shutil import copyfile
+from shutil import copy2
 import boto3
 import math
 import os
 import subprocess
+import time
 
 class EbClient:
 
@@ -17,33 +22,32 @@ class EbClient:
         application_name = ebLocalConfigurator.getApplicationName()
 
         fileres = open(os.path.join(path, "index.php"), "a")
-        fileres.write("<?php\nprint(\"Hello World from " + application_name + "!!!\");\n\n")
+        fileres.write("<?php\n\nprint(\"Hello World from " + application_name + "!!!\");\n\n")
         fileres.close()
 
-        current_path = os.getcwd()
-        os.chdir(path)
-        subprocess.call(['git', 'init'])
-        subprocess.call(['git', 'add', '.'])
-        subprocess.call(['git', 'commit', '-m', "First commit"])
-        os.chdir(path)
+        versionAppName = 'version1'
+
+        self.sendToS3(application_name, versionAppName)
+
+        self.prepareWithGit(path)
 
         response = self.eb_client.create_application(ApplicationName=name)
 
         self.eb_client.create_application_version(
             ApplicationName=name,
-            VersionLabel='version1',
-            # SourceBuildInformation={
-            #     'SourceType': 'Git',
-            #     'SourceRepository': 'CodeCommit',
-            #     'SourceLocation': 'my-git-repo/1234'
-            # },
-            SourceBuildInformation={
-                'SourceType': 'Zip',
-                'SourceRepository': 'S3',
-                'SourceLocation': 'my-s3-bucket/Folders/my-source-file'
+            # VersionLabel='version-' + DcgsPythonHelpers().getHashDateFromDate(),
+            VersionLabel=versionAppName,
+            SourceBundle={
+                'S3Bucket': 'elasticbeanstalk-us-east-1-000000000000',
+                'S3Key': name + '/' + versionAppName + '.zip'
             },
             Process=True,
         )
+
+        # waiters_name = self.eb_client.waiter_names
+        # print(waiters_name)
+
+        # time.sleep(10)
 
         self.eb_client.create_environment(
             ApplicationName=name,
@@ -56,6 +60,7 @@ class EbClient:
                     'Value': 'aws-elasticbeanstalk-ec2-role'
                 },
             ],
+            VersionLabel=versionAppName
         )
         
         return EBFormater(response["Application"])
@@ -111,3 +116,29 @@ class EbClient:
 
     def get_name(self) -> str:
         return 'app-' + str(math.ceil(random() * 10000))
+
+    def prepareWithGit(self, path: str):
+        current_path = os.getcwd()
+        os.chdir(path)
+        subprocess.call(['git', 'init'])
+        subprocess.call(['git', 'add', 'index.php', '.elasticbeanstalk/config.yml'])
+        subprocess.call(['git', 'commit', '-m', "First commit"])
+        os.chdir(current_path)
+
+    def sendToS3(self, app_name_version: str, version: str):
+
+        filename = version + '.zip'
+        zipObj = ZipFile(filename, 'w')
+        zipObj.write('index.php')
+        zipObj.write(os.path.join('.elasticbeanstalk', 'config.yml'))
+        zipObj.close()
+
+        s3_client = boto3.client('s3')
+        response = s3_client.upload_file(filename, 'elasticbeanstalk-us-east-1-000000000000', app_name_version + "/" + filename)
+        # response = s3_client.upload_file(filename, 'elasticbeanstalk-us-east-1-000000000000', version + ".zip")
+        # response = s3_client.upload_fileobj(filename, 'elasticbeanstalk-us-east-1-000000000000', version + ".zip")
+        print(response)
+
+        # copy2(filename, os.path.join("..", filename))
+        # os.remove(filename)
+
