@@ -3,7 +3,6 @@ from smart_eb.EBFormater import EBFormater
 from smart_eb.EbLocalConfigurator import EbLocalConfigurator
 from random import random
 from zipfile import ZipFile
-# from shutil import copyfile
 from shutil import copy2
 import boto3
 import math
@@ -15,6 +14,7 @@ class EbClient:
 
     def __init__(self):
         self.eb_client = boto3.client('elasticbeanstalk')
+        self.userId = boto3.client('sts').get_caller_identity().get('Account')
 
     def new(self, path: str, name: str) -> EBFormater:
         
@@ -35,19 +35,13 @@ class EbClient:
 
         self.eb_client.create_application_version(
             ApplicationName=name,
-            # VersionLabel='version-' + DcgsPythonHelpers().getHashDateFromDate(),
             VersionLabel=versionAppName,
             SourceBundle={
-                'S3Bucket': 'elasticbeanstalk-us-east-1-000000000000',
+                'S3Bucket': 'elasticbeanstalk-us-east-1-' + self.userId,
                 'S3Key': name + '/' + versionAppName + '.zip'
             },
             Process=True,
         )
-
-        # waiters_name = self.eb_client.waiter_names
-        # print(waiters_name)
-
-        # time.sleep(10)
 
         self.eb_client.create_environment(
             ApplicationName=name,
@@ -65,7 +59,6 @@ class EbClient:
         
         return EBFormater(response["Application"])
         
-
     def list(self) -> str:
         response_data = self.eb_client.describe_applications()
 
@@ -134,11 +127,6 @@ class EbClient:
         zipObj.close()
 
         s3_client = boto3.client('s3')
-        response = s3_client.upload_file(filename, 'elasticbeanstalk-us-east-1-000000000000', app_name_version + "/" + filename)
-        # response = s3_client.upload_file(filename, 'elasticbeanstalk-us-east-1-000000000000', version + ".zip")
-        # response = s3_client.upload_fileobj(filename, 'elasticbeanstalk-us-east-1-000000000000', version + ".zip")
+        response = s3_client.upload_file(filename, 'elasticbeanstalk-us-east-1-' + self.userId, app_name_version + "/" + filename)
         print(response)
-
-        # copy2(filename, os.path.join("..", filename))
-        # os.remove(filename)
 
