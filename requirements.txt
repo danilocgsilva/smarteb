@@ -1,0 +1,3 @@
+-e git+https://github.com/danilocgsilva/danilocgsilvamepythonhelpers.git@master#egg=danilocgsilvame_python_helpers
+-e git+https://github.com/danilocgsilva/AWSGuessLocalProfile@master#egg=awsguesslocalprofile
+boto3
