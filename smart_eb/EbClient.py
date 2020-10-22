@@ -1,6 +1,7 @@
 from danilocgsilvame_python_helpers.DcgsPythonHelpers import DcgsPythonHelpers
 from smart_eb.EBFormater import EBFormater
 from smart_eb.EbLocalConfigurator import EbLocalConfigurator
+from awsguesslocalprofile.AWSGuessLocalProfile import AWSGuessLocalProfile
 from random import random
 from zipfile import ZipFile
 from shutil import copy2
@@ -13,6 +14,7 @@ import time
 class EbClient:
 
     def __init__(self):
+        os.environ['AWS_PROFILE'] = AWSGuessLocalProfile().guess()
         self.eb_client = boto3.client('elasticbeanstalk')
         self.userId = boto3.client('sts').get_caller_identity().get('Account')
 
