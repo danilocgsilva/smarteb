@@ -10,6 +10,7 @@ import math
 import os
 import subprocess
 import time
+import botocore
 
 class EbClient:
 
@@ -68,14 +69,25 @@ class EbClient:
         )
 
         print("The environment will be ready in the next 2 minutes...")
+
         time.sleep(120)
-        apdata = self.eb_client.describe_environments(ApplicationName=name)
-        env_data = apdata["Environments"][0]
-        if "CNAME" in env_data:
+
+        waiter = self.eb_client.get_waiter('environment_exists')
+
+        try:
+            waiter.wait()
+            apdata = self.eb_client.describe_environments(ApplicationName=name)
+            env_data = apdata["Environments"][0]
+            
             env_address = "http://" + env_data["CNAME"]
             print("Now you can access your environment in: " + env_address)
+
+            return EBFormater(response["Application"])
+
+        except botocore.exceptions.WaiterError:
+            print("Does not workd!")
+
         
-        return EBFormater(response["Application"])
         
     def list(self) -> str:
         response_data = self.eb_client.describe_applications()
