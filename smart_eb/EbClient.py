@@ -11,6 +11,7 @@ import os
 import subprocess
 import time
 
+
 class EbClient:
 
     def __init__(self):
@@ -20,6 +21,7 @@ class EbClient:
 
     def new(self, path: str, name: str) -> EBFormater:
         
+        os.makedirs(path)
         ebLocalConfigurator = self.create_eb_config(name, path)
         application_name = ebLocalConfigurator.getApplicationName()
 
@@ -29,12 +31,14 @@ class EbClient:
 
         versionAppName = 'version1'
 
-        self.sendToS3(application_name, versionAppName)
+        self.sendToS3(application_name, versionAppName, path)
 
         self.prepareWithGit(path)
 
+        print("Creating the application " + name)
         response = self.eb_client.create_application(ApplicationName=name)
 
+        print("Creating the application version " + versionAppName)
         self.eb_client.create_application_version(
             ApplicationName=name,
             VersionLabel=versionAppName,
@@ -45,6 +49,11 @@ class EbClient:
             Process=True,
         )
 
+        time_to_wait_in_seconds = 5
+        print("Waiting " + str(time_to_wait_in_seconds) + " seconds...")
+        time.sleep(time_to_wait_in_seconds)
+
+        print("Creating the environment for application " + name)
         self.eb_client.create_environment(
             ApplicationName=name,
             EnvironmentName=ebLocalConfigurator.getEnvironment(),
@@ -120,9 +129,11 @@ class EbClient:
         subprocess.call(['git', 'commit', '-m', "First commit"])
         os.chdir(current_path)
 
-    def sendToS3(self, app_name_version: str, version: str):
-
+    def sendToS3(self, app_name_version: str, version: str, path: str):
+        original_dir = os.getcwd()
+        os.chdir(path)
         filename = version + '.zip'
+
         zipObj = ZipFile(filename, 'w')
         zipObj.write('index.php')
         zipObj.write(os.path.join('.elasticbeanstalk', 'config.yml'))
@@ -131,4 +142,5 @@ class EbClient:
         s3_client = boto3.client('s3')
         response = s3_client.upload_file(filename, 'elasticbeanstalk-us-east-1-' + self.userId, app_name_version + "/" + filename)
         print(response)
+        os.chdir(original_dir)
 

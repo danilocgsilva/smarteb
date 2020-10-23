@@ -2,6 +2,7 @@ from smart_eb.EbClient import EbClient
 from smart_eb.UserCall import UserCall
 from smart_eb.UserResponse import UserResponse
 from awsguesslocalprofile.AWSGuessLocalProfile import AWSGuessLocalProfile
+from pathlib import Path
 import os
 import re
 import sys
@@ -19,7 +20,8 @@ def main():
         user_response.setList(eb_client.list()).printFromList()
     elif user_command.getUserCommand() == "new":
         app_name = get_name()
-        ebdata = eb_client.new(os.getcwd(), app_name)
+        full_directory_path = os.path.join(str(Path.home()), app_name)
+        ebdata = eb_client.new(full_directory_path, app_name)
         user_response.setEbData(ebdata).printFromNew()
     elif re.search("^delete", user_command.getUserCommand()):
         if not re.search("^delete:", user_command.getUserCommand()):
