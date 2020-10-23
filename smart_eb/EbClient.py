@@ -11,7 +11,6 @@ import os
 import subprocess
 import time
 
-
 class EbClient:
 
     def __init__(self):
@@ -67,6 +66,14 @@ class EbClient:
             ],
             VersionLabel=versionAppName
         )
+
+        print("The environment will be ready in the next 2 minutes...")
+        time.sleep(120)
+        apdata = self.eb_client.describe_environments(ApplicationName=name)
+        env_data = apdata["Environments"][0]
+        if "CNAME" in env_data:
+            env_address = "http://" + env_data["CNAME"]
+            print("Now you can access your environment in: " + env_address)
         
         return EBFormater(response["Application"])
         
@@ -140,7 +147,6 @@ class EbClient:
         zipObj.close()
 
         s3_client = boto3.client('s3')
-        response = s3_client.upload_file(filename, 'elasticbeanstalk-us-east-1-' + self.userId, app_name_version + "/" + filename)
-        print(response)
+        s3_client.upload_file(filename, 'elasticbeanstalk-us-east-1-' + self.userId, app_name_version + "/" + filename)
         os.chdir(original_dir)
 

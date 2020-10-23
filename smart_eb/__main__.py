@@ -22,7 +22,8 @@ def main():
         app_name = get_name()
         full_directory_path = os.path.join(str(Path.home()), app_name)
         ebdata = eb_client.new(full_directory_path, app_name)
-        user_response.setEbData(ebdata).printFromNew()
+        # user_response.setEbData(ebdata).printFromNew()
+        user_response.setEbData(ebdata)
     elif re.search("^delete", user_command.getUserCommand()):
         if not re.search("^delete:", user_command.getUserCommand()):
             user_response.printHelpForDelete()
