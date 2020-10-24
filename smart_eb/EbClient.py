@@ -68,25 +68,22 @@ class EbClient:
             VersionLabel=versionAppName
         )
 
-        print("The environment will be ready in the next 2 minutes...")
-
-        time.sleep(120)
+        print("Awaiting to the environment becomes ready. It may be ready within 2 minutes.")
 
         waiter = self.eb_client.get_waiter('environment_exists')
 
         try:
-            waiter.wait()
+            waiter.wait(ApplicationName=name)
             apdata = self.eb_client.describe_environments(ApplicationName=name)
             env_data = apdata["Environments"][0]
             
             env_address = "http://" + env_data["CNAME"]
             print("Now you can access your environment in: " + env_address)
 
-            return EBFormater(response["Application"])
+            return EBFormater().setApplicationData(response["Application"])
 
         except botocore.exceptions.WaiterError:
-            print("Does not workd!")
-
+            print("Does not worked! Sorry...")
         
         
     def list(self) -> str:
@@ -94,11 +91,11 @@ class EbClient:
 
         eb_data_list = []
         for ebdata in response_data["Applications"]:
-            eb_data_list.append(EBFormater(ebdata))
+            eb_data_list.append(EBFormater().setApplicationData(ebdata))
 
         return eb_data_list
 
-    def delete(self, app_name: str):
+    def deleteApp(self, app_name: str):
 
         response_data = self.eb_client.describe_applications(
             ApplicationNames=[app_name]
@@ -162,3 +159,16 @@ class EbClient:
         s3_client.upload_file(filename, 'elasticbeanstalk-us-east-1-' + self.userId, app_name_version + "/" + filename)
         os.chdir(original_dir)
 
+    def killSeveralAppsAtOnce(self, apps_list: list):
+
+        for app_option in apps_list:
+            if app_option == "":
+                option_invalid_message = "There are invalid options in the set of apps to be deleted."
+                raise Exception(option_invalid_message)
+
+        if len(apps_list) == 0:
+            raise Exception("You provided an empty list for deleting apps")
+
+        for app in apps_list:
+            self.deleteApp(app)
+    
