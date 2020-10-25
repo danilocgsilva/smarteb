@@ -1,7 +1,6 @@
 from danilocgsilvame_python_helpers.DcgsPythonHelpers import DcgsPythonHelpers
 from smart_eb.EBFormater import EBFormater
 from smart_eb.EbLocalConfigurator import EbLocalConfigurator
-# from awsguesslocalprofile.AWSGuessLocalProfile import AWSGuessLocalProfile
 from awsutils.AWSUtils import AWSUtils
 from random import random
 from zipfile import ZipFile
@@ -175,4 +174,13 @@ class EbClient:
 
         for app in apps_list:
             self.deleteApp(app)
-    
+
+    def killDEEPLYSeveralAppsAtOnce(self, apps_to_destroy: list):
+        for app_to_destroy in apps_to_destroy:
+            print("Lets destroy this app: " + app_to_destroy)
+            for environmentId in EBFormater().setEnvironmentResponse(
+                self.eb_client.describe_environments(ApplicationName=app_to_destroy)
+            ).getAllEnvironmentsIds():
+                self.eb_client.terminate_environment(EnvironmentId=environmentId)
+            print("Now the application " + app_to_destroy + " will varnish...")
+            self.deleteApp(app_to_destroy)
