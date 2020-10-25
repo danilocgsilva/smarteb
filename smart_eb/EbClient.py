@@ -32,9 +32,9 @@ class EbClient:
 
         versionAppName = 'version1'
 
-        self.sendToS3(application_name, versionAppName, path)
-
         self.prepareWithGit(path)
+
+        self.sendToS3(application_name, versionAppName, path)
 
         print("Creating the application " + name)
         response = self.eb_client.create_application(ApplicationName=name)
