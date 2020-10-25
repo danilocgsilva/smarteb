@@ -1,7 +1,8 @@
 from danilocgsilvame_python_helpers.DcgsPythonHelpers import DcgsPythonHelpers
 from smart_eb.EBFormater import EBFormater
 from smart_eb.EbLocalConfigurator import EbLocalConfigurator
-from awsguesslocalprofile.AWSGuessLocalProfile import AWSGuessLocalProfile
+# from awsguesslocalprofile.AWSGuessLocalProfile import AWSGuessLocalProfile
+from awsutils.AWSUtils import AWSUtils
 from random import random
 from zipfile import ZipFile
 from shutil import copy2
@@ -15,7 +16,7 @@ import botocore
 class EbClient:
 
     def __init__(self):
-        os.environ['AWS_PROFILE'] = AWSGuessLocalProfile().guess()
+        os.environ['AWS_PROFILE'] = AWSUtils().guessLocalProfile()
         self.eb_client = boto3.client('elasticbeanstalk')
         self.userId = boto3.client('sts').get_caller_identity().get('Account')
 
@@ -123,6 +124,9 @@ class EbClient:
             .setDefaultPlatform("PHP 7.4 running on 64bit Amazon Linux 2")\
             .guess_environment_name()
 
+        keyNameGuessed = AWSUtils().get_key_pair_name()
+        if keyNameGuessed != "":
+            ebLocalConfigurator.setDefaultEc2Keyname(keyNameGuessed)
         folder_to_be_created = os.path.join(path, '.elasticbeanstalk')
         os.makedirs(folder_to_be_created)
         file_to_be_created = os.path.join(folder_to_be_created, 'config.yml')

@@ -2,12 +2,12 @@ from smart_eb.EbClient import EbClient
 from smart_eb.UserCall import UserCall
 from smart_eb.UserResponse import UserResponse
 from smart_eb.EBFormater import EBFormater
-from awsguesslocalprofile.AWSGuessLocalProfile import AWSGuessLocalProfile
+# from awsguesslocalprofile.AWSGuessLocalProfile import AWSGuessLocalProfile
+from awsutils.AWSUtils import AWSUtils
 from pathlib import Path
 import os
 import re
 import sys
-
 
 def main():
 
