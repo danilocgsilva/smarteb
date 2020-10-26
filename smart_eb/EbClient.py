@@ -29,6 +29,23 @@ class EbClient:
         fileres.write("<?php\n\nprint(\"Hello World from " + application_name + "!!!\");\n\n")
         fileres.close()
 
+        customKeyConfigData = '''option_settings:
+  - namespace: aws:autoscaling:launchconfiguration
+    option_name: EC2KeyName
+    value: ''' + AWSUtils().get_key_pair_name()
+        self.__add_ebextension(path, "customkey", customKeyConfigData)
+
+        install_composer_scripts = '''container_commands:
+  sethome:
+    command: "export HOME=/root"
+  getcomposer:
+    command: "curl -sS https://getcomposer.org/installer | sudo php"
+  movetoglobalacessible:
+    command: "mv composer.phar /usr/local/bin/composer"
+  setcomposerexecutable:
+    command: "chmod +x /usr/local/bin/composer"'''
+        self.__add_ebextension(path, "commands", install_composer_scripts)
+
         versionAppName = 'version1'
 
         self.prepareWithGit(path)
@@ -85,7 +102,6 @@ class EbClient:
         except botocore.exceptions.WaiterError:
             print("Does not worked! Sorry...")
         
-        
     def list(self) -> str:
         response_data = self.eb_client.describe_applications()
 
@@ -135,7 +151,6 @@ class EbClient:
         f.close()
 
         return ebLocalConfigurator
-        
 
     def get_name(self) -> str:
         return 'app-' + str(math.ceil(random() * 10000))
@@ -144,22 +159,37 @@ class EbClient:
         current_path = os.getcwd()
         os.chdir(path)
         subprocess.call(['git', 'init'])
-        subprocess.call(['git', 'add', 'index.php', '.elasticbeanstalk/config.yml'])
+        subprocess.call(['git', 'add', '.'])
         subprocess.call(['git', 'commit', '-m', "First commit"])
         os.chdir(current_path)
 
     def sendToS3(self, app_name_version: str, version: str, path: str):
         original_dir = os.getcwd()
         os.chdir(path)
-        filename = version + '.zip'
+        zipFilename = version + '.zip'
 
-        zipObj = ZipFile(filename, 'w')
-        zipObj.write('index.php')
-        zipObj.write(os.path.join('.elasticbeanstalk', 'config.yml'))
+        zipObj = ZipFile(zipFilename, 'w')
+
+        # for root, subdirs, files in os.walk("."):
+        #     if root != ".":
+        #         zipObj.write(root[2:])
+
+        # zipObj.write('index.php')
+        # zipObj.write(os.path.join('.elasticbeanstalk', 'config.yml'))
+        # zipObj.write(os.path.join('.ebextensions', 'customkey.config'))
+
+        # for file in files:
+        #     print(os.path.join(root, file))
+
+        for root, subdirs, files in os.walk("."):
+            for file in files:
+                if file != zipFilename:
+                    zipObj.write(os.path.join(root, file))
+
         zipObj.close()
 
         s3_client = boto3.client('s3')
-        s3_client.upload_file(filename, 'elasticbeanstalk-us-east-1-' + self.userId, app_name_version + "/" + filename)
+        s3_client.upload_file(zipFilename, 'elasticbeanstalk-us-east-1-' + self.userId, app_name_version + "/" + zipFilename)
         os.chdir(original_dir)
 
     def killSeveralAppsAtOnce(self, apps_list: list):
@@ -184,3 +214,14 @@ class EbClient:
                 self.eb_client.terminate_environment(EnvironmentId=environmentId)
             print("Now the application " + app_to_destroy + " will varnish...")
             self.deleteApp(app_to_destroy)
+
+
+    def __add_ebextension(self, path: str, filename: str, filecontent: str):
+        ebextension_path = os.path.join(path, '.ebextensions')
+        if not os.path.isfile(ebextension_path):
+            os.makedirs(ebextension_path)
+        config_env_name = os.path.join(ebextension_path, filename + ".config")
+
+        f = open(config_env_name, "a")
+        f.write(filecontent)
+        f.close()
